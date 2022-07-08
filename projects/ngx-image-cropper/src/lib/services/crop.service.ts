@@ -4,13 +4,53 @@ import { CropperSettings } from '../interfaces/cropper.settings';
 import { resizeCanvas } from '../utils/resize.utils';
 import { percentage } from '../utils/percentage.utils';
 
-@Injectable({providedIn: 'root'})
+@Injectable()
 export class CropService {
 
   crop(sourceImage: ElementRef, loadedImage: LoadedImage, cropper: CropperPosition, settings: CropperSettings): ImageCroppedEvent | null {
     const imagePosition = this.getImagePosition(sourceImage, loadedImage, cropper, settings);
-    const width = imagePosition.x2 - imagePosition.x1;
-    const height = imagePosition.y2 - imagePosition.y1;
+    let width = imagePosition.x2 - imagePosition.x1;
+    let height = imagePosition.y2 - imagePosition.y1;
+    if (settings.fixAspectRatioWidth && settings.fixAspectRatioHeight) {
+      let currentFixAttempt = 0;
+      if (settings.fixAspectRatioBy === 'width') {
+        height = width / (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+        while (!Number.isInteger(height) && currentFixAttempt < settings.fixAttempts) {
+          width += 1;
+          height = width / (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+          if (height > loadedImage.original.size.height)
+            break;
+          currentFixAttempt += 1;
+        }
+        if (height > loadedImage.original.size.height) {
+          height = loadedImage.original.size.height;
+          width = height * (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+          while (!Number.isInteger(width) && currentFixAttempt < settings.fixAttempts) {
+            height -= 1;
+            width = height * (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+            currentFixAttempt += 1;
+          }
+        }
+      } else if (settings.fixAspectRatioBy === 'height') {
+        width = height * (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+        while (!Number.isInteger(width) && currentFixAttempt < settings.fixAttempts) {
+          height += 1;
+          width = height * (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+          if (width > loadedImage.original.size.width)
+            break;
+          currentFixAttempt += 1;
+        }
+        if (width > loadedImage.original.size.width) {
+          width = loadedImage.original.size.width;
+          height = width / (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+          while (!Number.isInteger(height) && currentFixAttempt < settings.fixAttempts) {
+            width -= 1;
+            height = width / (settings.fixAspectRatioWidth / settings.fixAspectRatioHeight);
+            currentFixAttempt += 1;
+          }
+        }
+      }
+    }
     const cropCanvas = document.createElement('canvas') as HTMLCanvasElement;
     cropCanvas.width = width;
     cropCanvas.height = height;
@@ -32,7 +72,7 @@ export class CropService {
     ctx.translate(-imagePosition.x1 / scaleX, -imagePosition.y1 / scaleY);
     ctx.rotate((settings.transform.rotate || 0) * Math.PI / 180);
 
-    const {translateH, translateV} = this.getCanvasTranslate(sourceImage, loadedImage, settings);
+    const { translateH, translateV } = this.getCanvasTranslate(sourceImage, loadedImage, settings);
     ctx.drawImage(
       transformedImage.image,
       translateH - transformedImage.size.width / 2,
@@ -42,7 +82,7 @@ export class CropService {
     const output: ImageCroppedEvent = {
       width, height,
       imagePosition,
-      cropperPosition: {...cropper}
+      cropperPosition: { ...cropper }
     };
     if (settings.containWithinAspectRatio) {
       output.offsetImagePosition = this.getOffsetImagePosition(sourceImage, loadedImage, cropper, settings);

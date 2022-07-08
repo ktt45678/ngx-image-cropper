@@ -9,7 +9,7 @@ interface LoadImageBase64 {
   originalBase64: string;
 }
 
-@Injectable({providedIn: 'root'})
+@Injectable()
 export class LoadImageService {
 
   private autoRotateSupported: Promise<boolean> = supportsAutomaticRotation();

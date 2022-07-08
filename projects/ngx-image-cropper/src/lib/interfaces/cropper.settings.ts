@@ -27,6 +27,10 @@ export class CropperSettings {
   containWithinAspectRatio = false;
   hideResizeSquares = false;
   alignImage: 'left' | 'center' = 'center';
+  fixAspectRatioBy: 'width' | 'height' | 'none' = 'width';
+  fixAspectRatioWidth = 0;
+  fixAspectRatioHeight = 0;
+  fixAttempts = 100;
 
   // Internal
   cropperScaledMinWidth = 20;

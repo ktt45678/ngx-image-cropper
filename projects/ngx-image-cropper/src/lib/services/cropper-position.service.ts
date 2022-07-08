@@ -2,7 +2,7 @@ import { ElementRef, Injectable } from '@angular/core';
 import { CropperPosition, Dimensions, MoveStart } from '../interfaces';
 import { CropperSettings } from '../interfaces/cropper.settings';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class CropperPositionService {
 
   resetCropperPosition(sourceImage: ElementRef, cropperPosition: CropperPosition, settings: CropperSettings): void {
